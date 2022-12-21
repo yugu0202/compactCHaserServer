@@ -1,8 +1,8 @@
-import socketControl
+import SocketControl
 import time
 
 def main():
-    cool = socketControl.Socket(2009)
+    cool = SocketControl.Socket(2009)
     print(cool.wait_connect())
     time.sleep(1)
     cool.send("test")
