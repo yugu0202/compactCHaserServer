@@ -14,5 +14,5 @@ while True:
 
     print(string_data)
 
-    s.send("hello".encode("utf-8"))
+    s.send("gr\r\n".encode("utf-8"))
 
