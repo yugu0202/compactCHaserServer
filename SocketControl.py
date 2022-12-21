@@ -8,7 +8,7 @@ class Socket:
         self.s.bind(("0.0.0.0", self.port))
         self.s.listen(1)
 
-    def get_tag(self) -> str:
+    def get_tag(self):
         return self.tag
 
     def wait_connect(self):
@@ -16,10 +16,13 @@ class Socket:
         print(f"Connection from {address[0]}:{self.port}")
         self.conn.settimeout(10)
 
-    def recieve(self) -> str:
+    def recieve(self):
         req = self.conn.recv(4096)
         string_data = req.decode("utf-8")
         return string_data
 
     def send(self,data:str):
         self.conn.send(data.encode("utf-8"))
+
+    def close(self):
+        self.conn.close()

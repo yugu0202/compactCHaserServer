@@ -38,6 +38,8 @@ def main():
 
     #ゲームマネージャーの初期化
 
+    turn = 100
+
     #ソケットの準備
     cool = SocketControl.Socket(args.firstport,"cool")
     hot = SocketControl.Socket(args.secondport,"hot")
@@ -57,10 +59,23 @@ def main():
     print("ready")
     print(f"cool: \"{cool_name}\" vs hot: \"{hot_name}\"\nstart!!")
 
-    character = cool
-    while True: #ゲームマネージャーからの継続中チェック
-        battle(character,logger)
+    is_end = False
+    character = hot
+
+    while not is_end: #ゲームマネージャーからの継続中チェック
         character = hot if character == cool else cool
+        is_end,turn = battle(character,logger,turn)
+        is_end = True if is_end else False
+    
+    #試合終了の処理
+    if turn == 0:
+        #ゲームマネージャーから対戦結果の受け取り
+        pass
+    else:
+        logger.result(character.get_tag(),f"{character.get_tag()} is error")
+
+    cool.close()
+    hot.close()
 
 #接続受付
 def setup(cool,hot):
@@ -75,7 +90,7 @@ def setup(cool,hot):
             break
 
 #キャラクター行動処理一回分
-def battle(character,logger):
+def battle(character,logger,turn):
     recieve = action("@",character,logger)
     result = "test" #ここでゲームマネージャーにコマンドを送信して返り値として結果を受け取る
     recieve = action(result,character,logger)
@@ -83,9 +98,19 @@ def battle(character,logger):
     character.send(result)
     recieve = character.recieve() #ここは終了の合図 #\r\nが来る
 
-def action(data:str,character,logger) -> str:
+    turn -= 1
+
+    is_end = True if turn == 0 else False
+
+    return is_end,turn
+
+def action(data:str,character,logger):
     character.send(data) #開始の合図(@) or 行動後のデータ
-    recieve = character.recieve()
+    recieve = character.recieve().strip()
+    if not len(recieve) == 2:
+        print(f"Error: this command does not exist\ncommand {recieve}",file=sys.stderr)
+        logger.result(character.get_tag(),f"{character.get_tag()} sent a command that does not exist. command: {recieve}")
+        sys.exit(1)
     logger.action(character.get_tag(),recieve)
     return recieve
 
