@@ -11,7 +11,6 @@ class Socket:
         self.conn, address = self.s.accept()
         print(f"Connection from {address}:{self.port}")
         self.conn.settimeout(10)
-        return self.recieve()
 
     def recieve(self):
         req = self.conn.recv(4096)
