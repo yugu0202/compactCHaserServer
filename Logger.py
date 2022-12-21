@@ -15,8 +15,19 @@ class Logger:
         with open(self.path,mode="a") as f:
             f.write(f"\n{character},{command}")
 
-    def result(self,loser:str,reason:str):
-        winner = "cool" if loser == "hot" else "hot"
-        with open(self.path,mode="a") as f:
-            f.write("\ngameend")
-            f.write(f"\n{winner},win,{reason}")
+    def result(self,player:str,result:str,reason:str):
+        winner = None
+        if result == "lose":
+            winner = "cool" if player == "hot" else "hot"
+            result = "win"
+        elif result == "win":
+            winner = player
+
+        if winner:
+            with open(self.path,mode="a") as f:
+                f.write("\ngameend")
+                f.write(f"\n{winner},{result},{reason}")
+        else:
+            with open(self.path,mode="a") as f:
+                f.write("\ngameend")
+                f.write(f"\n{result},{reason}")
