@@ -26,9 +26,12 @@ def main():
 
     args = parser.parse_args()
 
-    cwd = os.getcwd()
     map_path = os.path.abspath(args.mappath)
     log_path = os.path.abspath(args.log)
+
+    if not os.path.exists(map_path):
+        print(f"Error: map file not exists\npath: {map_path}", file=sys.stderr)
+        sys.exit(1)
 
     #ロガーの準備
     logger = Logger.Logger(log_path,map_path)
