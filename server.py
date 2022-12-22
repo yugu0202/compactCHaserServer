@@ -6,6 +6,7 @@ import signal
 
 import SocketControl
 import Logger
+import GameManager
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -37,8 +38,8 @@ def main():
     logger = Logger.Logger(log_path,map_path)
 
     #ゲームマネージャーの初期化
-
-    turn = 100
+    game_manager = GameManager.GameManager(map_path)
+    turn = game_manager.get_turn()
 
     #ソケットの準備
     cool = SocketControl.Socket(args.firstport,"cool")
@@ -50,8 +51,8 @@ def main():
     setup(cool,hot)
 
     #接続完了したので名前を受け取る
-    cool_name = cool.recieve()
-    hot_name = hot.recieve()
+    cool_name = cool.recieve().strip()
+    hot_name = hot.recieve().strip()
 
     #名前をログに記録
     logger.set_name(cool_name,hot_name)
@@ -62,17 +63,23 @@ def main():
     is_end = False
     character = hot
 
-    while not is_end: #ゲームマネージャーからの継続中チェック
+    while not is_end: #継続中チェック
         character = hot if character == cool else cool
-        is_end,turn = battle(character,logger,turn)
-        is_end = True if is_end else False
+        is_end,turn = battle(character,logger,game_manager,turn)
+        is_end = True if is_end or game_manager.get_is_end() else False
     
     #試合終了の処理
     if turn == 0:
+        print("turn end!!")
         #ゲームマネージャーから対戦結果の受け取り
-        pass
+        player,result,cool_item,hot_item = game_manager.result()
+        logger.result(player,result,f"cool {cool_item} : hot {hot_item}")
     else:
-        logger.result(character.get_tag(),f"{character.get_tag()} is error")
+        logger.result(character.get_tag(),"lose",f"{character.get_tag()} is error")
+
+    character = hot if character == cool else cool
+    character.send("@")
+    recieve = character.recieve().strip()
 
     cool.close()
     hot.close()
@@ -90,11 +97,13 @@ def setup(cool,hot):
             break
 
 #キャラクター行動処理一回分
-def battle(character,logger,turn):
+def battle(character,logger,game_manager,turn):
     recieve = action("@",character,logger)
-    result = "test" #ここでゲームマネージャーにコマンドを送信して返り値として結果を受け取る
+    data = game_manager.char_action(character.get_tag(),recieve)
+    result = "".join(map(str,data))
     recieve = action(result,character,logger)
-    result = "test" #ここでゲームマネージャーにコマンドを送信して返り値として結果を受け取る
+    data = game_manager.char_action(character.get_tag(),recieve)
+    result = "".join(map(str,data))
     character.send(result)
     recieve = character.recieve() #ここは終了の合図 #\r\nが来る
 
@@ -109,7 +118,7 @@ def action(data:str,character,logger):
     recieve = character.recieve().strip()
     if not len(recieve) == 2:
         print(f"Error: this command does not exist\ncommand {recieve}",file=sys.stderr)
-        logger.result(character.get_tag(),f"{character.get_tag()} sent a command that does not exist. command: {recieve}")
+        logger.result(character.get_tag(),"lose",f"{character.get_tag()} sent a command that does not exist. command: {recieve}")
         sys.exit(1)
     logger.action(character.get_tag(),recieve)
     return recieve
