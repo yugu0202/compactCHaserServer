@@ -65,7 +65,12 @@ def main():
 
     while not is_end: #継続中チェック
         character = hot if character == cool else cool
-        is_end,turn = battle(character,logger,game_manager,turn)
+        try:
+            is_end,turn = battle(character,logger,game_manager,turn)
+        except ConnectionAbortedError:
+            print(f"{character.get_tag()} is lose\nreason: lost connection")
+            logger.result(character.get_tag(),"lose",f"{character.get_tag()} lost connection")
+            return
         is_end = True if is_end or game_manager.get_is_end() else False
     
     #試合終了の処理
@@ -100,9 +105,13 @@ def setup(cool,hot):
 def battle(character,logger,game_manager,turn):
     recieve = action("@",character,logger)
     data = game_manager.char_action(character.get_tag(),recieve)
+    if game_manager.get_is_end():
+        return True,turn
     result = "".join(map(str,data))
     recieve = action(result,character,logger)
     data = game_manager.char_action(character.get_tag(),recieve)
+    if game_manager.get_is_end():
+        return True,turn
     result = "".join(map(str,data))
     character.send(result)
     recieve = character.recieve() #ここは終了の合図 #\r\nが来る
@@ -116,8 +125,12 @@ def battle(character,logger,game_manager,turn):
 def action(data:str,character,logger):
     character.send(data) #開始の合図(@) or 行動後のデータ
     recieve = character.recieve().strip()
+    if not recieve:
+        print(f"{character.get_tag()} is lose\nreason: lost connection")
+        logger.result(character.get_tag(),"lose",f"{character.get_tag()} lost connection")
+        sys.exit(1)
     if not len(recieve) == 2:
-        print(f"Error: this command does not exist\ncommand {recieve}",file=sys.stderr)
+        print(f"{character.get_tag()} is lose\nreason: command {recieve} does not exists",file=sys.stderr)
         logger.result(character.get_tag(),"lose",f"{character.get_tag()} sent a command that does not exist. command: {recieve}")
         sys.exit(1)
     logger.action(character.get_tag(),recieve)

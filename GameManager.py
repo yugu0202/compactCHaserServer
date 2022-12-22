@@ -39,7 +39,6 @@ class GameManager:
         return self.turn
 
     def get_ready(self, character):
-        print(character)
         if character == "hot":
             position = self.hot_position
             enemy_position = self.cool_position
