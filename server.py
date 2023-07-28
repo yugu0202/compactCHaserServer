@@ -14,21 +14,22 @@ def main():
     parser = argparse.ArgumentParser(
         prog="compact CHaser Server",
         usage="py server.py <MAPPATH> [OPTIONS]",
-        description="このプログラムはコマンドで簡単にCHaserの対戦を行うためのものです"
+        description="このプログラムはコマンドライン上で簡単にCHaserの対戦を行うためのものです"
     )
     """
     py server.py {map_path} --cport {cool_port} --hport {hot_port} --log {log_path}
     py server.py {map_path} -c {cool_port} -h {hot_port} -l {log_path}
     """
-    parser.add_argument("mappath", help="マップのパス")
-    parser.add_argument("-f", "--firstport", default=2009, help="coolのポート")
-    parser.add_argument("-s", "--secondport", default=2010, help="hotのポート")
-    parser.add_argument("-l", "--log", default="./chaser.log", help="logのパス")
+    parser.add_argument("mappath", help="マップのパス(実行ディレクトリから相対)")
+    parser.add_argument("-f", "--firstport", default=2009, help="先攻のポート")
+    parser.add_argument("-s", "--secondport", default=2010, help="後攻のポート")
+    parser.add_argument("-l", "--log", default="./chaser.log", help="logの出力先(実行ディレクトリから相対)")
 
     args = parser.parse_args()
 
-    map_path = os.path.abspath(args.mappath)
-    log_path = os.path.abspath(args.log)
+    base_path = os.getcwd()
+    map_path = os.path.join(base_path, args.mappath)
+    log_path = os.path.join(base_path, args.log)
 
     if not os.path.exists(map_path):
         print(f"Error: map file not exists\npath: {map_path}", file=sys.stderr)
