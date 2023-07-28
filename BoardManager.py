@@ -1,4 +1,4 @@
-class GameManager:
+class BoardManager:
 
     def __init__(self, map_path:str):
         with open(map_path, 'r') as map:
@@ -6,7 +6,7 @@ class GameManager:
 
         self.set_map(file_date)
 
-        self.is_end:bool = False
+        self.game_over:bool = False
         self.hot_item = 0
         self.cool_item = 0
 
@@ -32,12 +32,6 @@ class GameManager:
                 self.cool_position = list(map(int,file_line.split(":")[1].split(",")))
                 self.cool_position.reverse()
 
-    def get_is_end(self):
-        return self.is_end
-
-    def get_turn(self):
-        return self.turn
-
     def get_ready(self, character):
         if character == "hot":
             position = self.hot_position
@@ -46,17 +40,17 @@ class GameManager:
             position = self.cool_position
             enemy_position = self.hot_position
 
-        if self.is_end:
+        if self.game_over:
             return [0 for i in range(10)]
 
         if self.refer_map([position[0] - 1,position[1]]) == 2 and self.refer_map([position[0],position[1] + 1]) == 2 and self.refer_map([position[0] + 1,position[1]]) == 2 and self.refer_map([position[0],position[1] - 1]) == 2:
             print(f"{character} around block ;;")
-            self.is_end = True
+            self.game_over = True
             return [0 for i in range(10)]
 
         if position[0] < 0 or position[1] < 0 or position[0] >= self.map_size[0] or position[1] >= self.map_size[1] or self.map_data[position[0]][position[1]] == 2: #2は壁
             print(f"{character} fill up ;;")
-            self.is_end = True
+            self.game_over = True
             return [0 for i in range(10)]
 
         return self.around_data(position,enemy_position)
@@ -198,8 +192,8 @@ class GameManager:
 
     def result(self):
         if self.cool_item > self.hot_item:
-            return "cool","win",self.cool_item,self.hot_item
+            return "cool","win"
         elif self.hot_item > self.cool_item:
-            return "hot","win",self.cool_item,self.hot_item
+            return "hot","win"
         else:
-            return "","draw",self.cool_item,self.hot_item
+            return "","draw"
