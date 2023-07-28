@@ -42,7 +42,7 @@ def main():
 
     #ゲームマネージャーの初期化
     game_manager = BoardManager.BoardManager(map_path)
-    turn = game_manager.get_turn()
+    turn = game_manager.turn
 
     #ソケットの準備
     cool = SocketControl.Socket(args.firstport,"cool")
@@ -54,36 +54,39 @@ def main():
     setup(cool,hot)
 
     #接続完了したので名前を受け取る
-    cool_name = cool.recieve().strip()
-    hot_name = hot.recieve().strip()
+    cool_name = cool.recieve()
+    hot_name = hot.recieve()
 
     #名前をログに記録
-    logger.set_name(cool_name,hot_name)
+    logger.set_name(cool_name, hot_name)
 
     print("ready")
     print(f"cool: \"{cool_name}\" vs hot: \"{hot_name}\"\nstart!!")
 
     character = hot
 
+    #対戦処理
     while True:
         character = hot if character == cool else cool
         try:
             turn = battle(character,logger,game_manager,turn)
         except ConnectionAbortedError:
-            print(f"{character.get_tag()} is lose\nreason: lost connection")
-            logger.result(character.get_tag(),"lose",f"{character.get_tag()} lost connection")
+            print(f"{character.tag} is lose\nreason: lost connection")
+            logger.result(character.tag,"lose",f"{character.tag} lost connection")
             return
 
         #試合終了の処理
-        if game_manager.get_game_over():
-            print(f"{character.get_tag()} is lose\nreason: error")
-            logger.result(character.get_tag(),"lose",f"{character.get_tag()} is error")
+        if game_manager.game_over:
+            print(f"{character.tag} is lose\nreason: error")
+            logger.result(character.tag,"lose",f"{character.tag} is error")
             break
         elif turn == 0:
             print("turn end!!")
             #ゲームマネージャーから対戦結果の受け取り
-            player,result,cool_item,hot_item = game_manager.result()
-            if player;
+            player,result = game_manager.result()
+            cool_item = game_manager.cool_item
+            hot_item = game_manager.hot_item
+            if player:
                 print(f"{player} {result}\nreason score cool {cool_item} : hot {hot_item}")
             else:
                 print(f"{result}\nreason score cool {cool_item} : hot {hot_item}")
@@ -92,7 +95,7 @@ def main():
 
     character = hot if character == cool else cool
     character.send("@")
-    recieve = character.recieve().strip()
+    recieve = character.recieve()
 
     cool.close()
     hot.close()
@@ -112,17 +115,17 @@ def setup(cool,hot):
 #キャラクター行動処理一回分
 def battle(character,logger,game_manager,turn):
     recieve = action("@",character,logger)
-    data = game_manager.char_action(character.get_tag(),recieve) #get ready
-    if game_manager.get_game_over():
+    data = game_manager.char_action(character.tag,recieve) #get ready
+    if game_manager.game_over:
         return turn
     result = "".join(map(str,data))
     recieve = action(result,character,logger) # walk look search put
-    data = game_manager.char_action(character.get_tag(),recieve)
-    if game_manager.get_game_over():
+    data = game_manager.char_action(character.tag,recieve)
+    if game_manager.game_over:
         return turn
     result = "".join(map(str,data))
     character.send(result)
-    recieve = character.recieve() #ここは終了の合図 #\r\nが来る
+    recieve = character.recieve_unstrip() #ここは終了の合図 #\r\nが来る
 
     turn -= 1
 
@@ -130,16 +133,16 @@ def battle(character,logger,game_manager,turn):
 
 def action(data:str,character,logger):
     character.send(data) #開始の合図(@) or 行動後のデータ
-    recieve = character.recieve().strip()
+    recieve = character.recieve()
     if not recieve:
-        print(f"{character.get_tag()} is lose\nreason: lost connection", file=sys.stderr)
-        logger.result(character.get_tag(),"lose",f"{character.get_tag()} lost connection")
+        print(f"{character.tag} is lose\nreason: lost connection", file=sys.stderr)
+        logger.result(character.tag,"lose",f"{character.tag} lost connection")
         sys.exit(1)
     if not len(recieve) == 2:
-        print(f"{character.get_tag()} is lose\nreason: command {recieve} does not exists", file=sys.stderr)
-        logger.result(character.get_tag(),"lose",f"{character.get_tag()} sent a command that does not exist. command: {recieve}")
+        print(f"{character.tag} is lose\nreason: command {recieve} does not exists", file=sys.stderr)
+        logger.result(character.tag,"lose",f"{character.tag} sent a command that does not exist. command: {recieve}")
         sys.exit(1)
-    logger.action(character.get_tag(),recieve)
+    logger.action(character.tag,recieve)
     return recieve
 
 if __name__ == "__main__":

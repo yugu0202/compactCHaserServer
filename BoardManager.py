@@ -32,12 +32,6 @@ class BoardManager:
                 self.cool_position = list(map(int,file_line.split(":")[1].split(",")))
                 self.cool_position.reverse()
 
-    def get_game_over(self):
-        return self.game_over
-
-    def get_turn(self):
-        return self.turn
-
     def get_ready(self, character):
         if character == "hot":
             position = self.hot_position
@@ -198,8 +192,8 @@ class BoardManager:
 
     def result(self):
         if self.cool_item > self.hot_item:
-            return "cool","win",self.cool_item,self.hot_item
+            return "cool","win"
         elif self.hot_item > self.cool_item:
-            return "hot","win",self.cool_item,self.hot_item
+            return "hot","win"
         else:
-            return "","draw",self.cool_item,self.hot_item
+            return "","draw"
