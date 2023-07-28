@@ -63,39 +63,50 @@ def main():
     print("ready")
     print(f"cool: \"{cool_name}\" vs hot: \"{hot_name}\"\nstart!!")
 
-    character = hot
-
     #対戦処理
-    while True:
-        character = hot if character == cool else cool
+    while turn > 0:
         try:
-            turn = battle(character,logger,game_manager,turn)
+            if turn & 1 == 1:
+                tag = hot.tag
+                turn = battle(hot,logger,game_manager)
+            else:
+                tag = cool.tag
+                turn = battle(cool,logger,game_manager)
         except ConnectionAbortedError:
-            print(f"{character.tag} is lose\nreason: lost connection")
-            logger.result(character.tag,"lose",f"{character.tag} lost connection")
+            print(f"{tag} is lose\nreason: lost connection")
+            logger.result(character.tag,"lose",f"{tag} lost connection")
             return
 
         #試合終了の処理
         if game_manager.game_over:
-            print(f"{character.tag} is lose\nreason: error")
-            logger.result(character.tag,"lose",f"{character.tag} is error")
-            break
-        elif turn == 0:
-            print("turn end!!")
-            #ゲームマネージャーから対戦結果の受け取り
-            player,result = game_manager.result()
-            cool_item = game_manager.cool_item
-            hot_item = game_manager.hot_item
-            if player:
-                print(f"{player} {result}\nreason score cool {cool_item} : hot {hot_item}")
-            else:
-                print(f"{result}\nreason score cool {cool_item} : hot {hot_item}")
-            logger.result(player,result,f"cool {cool_item} : hot {hot_item}")
+            print(f"{tag} is lose\nreason: error", file=sys.stderr)
+            logger.result(tag,"lose",f"{tag} is error")
             break
 
-    character = hot if character == cool else cool
-    character.send("@")
-    recieve = character.recieve()
+        turn -= 1
+
+    if turn == 0:
+        print("turn end!!")
+        #ゲームマネージャーから対戦結果の受け取り
+        player,result = game_manager.result()
+        cool_item = game_manager.cool_item
+        hot_item = game_manager.hot_item
+        if player:
+            print(f"{player} {result}\nreason score cool {cool_item} : hot {hot_item}")
+        else:
+            print(f"{result}\nreason score cool {cool_item} : hot {hot_item}")
+        logger.result(player,result,f"cool {cool_item} : hot {hot_item}")
+
+        recieve = hot.recieve()
+        hot.send("".join(map(str,[0 for i in range(10)])))
+        recieve = cool.recieve()
+        cool.send("".join(map(str,[0 for i in range(10)])))
+    elif turn & 1 == 1:
+        recieve = cool.recieve()
+        cool.send("".join(map(str,[0 for i in range(10)])))
+    else:
+        recieve = hot.recieve()
+        hot.send("".join(map(str,[0 for i in range(10)])))
 
     cool.close()
     hot.close()
@@ -113,26 +124,23 @@ def setup(cool,hot):
             break
 
 #キャラクター行動処理一回分
-def battle(character,logger,game_manager,turn):
-    recieve = action("@",character,logger)
+def battle(character,logger,game_manager):
+    character.send("@") #開始の合図
+    recieve = recieve_action(character,logger)
     data = game_manager.char_action(character.tag,recieve) #get ready
-    if game_manager.game_over:
-        return turn
     result = "".join(map(str,data))
-    recieve = action(result,character,logger) # walk look search put
-    data = game_manager.char_action(character.tag,recieve)
+    character.send(result) #行動後のデータ
     if game_manager.game_over:
-        return turn
+        return
+    recieve = recieve_action(character,logger) # walk look search put
+    data = game_manager.char_action(character.tag,recieve)
     result = "".join(map(str,data))
     character.send(result)
-    recieve = character.recieve_unstrip() #ここは終了の合図 #\r\nが来る
+    if game_manager.game_over:
+        return
+    character.recieve_unstrip() #ここは終了の合図 #\r\nが来る
 
-    turn -= 1
-
-    return turn
-
-def action(data:str,character,logger):
-    character.send(data) #開始の合図(@) or 行動後のデータ
+def recieve_action(character,logger):
     recieve = character.recieve()
     if not recieve:
         print(f"{character.tag} is lose\nreason: lost connection", file=sys.stderr)
