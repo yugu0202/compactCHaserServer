@@ -33,6 +33,9 @@ class BoardManager:
                 self.cool_position = list(map(int,file_line.split(":")[1].split(",")))
                 self.cool_position.reverse()
 
+    def get_map_str(self):
+        return "\n".join([",".join(map(str,line)) for line in self.map_data])
+
     def get_ready(self, character):
         if character == "hot":
             position = self.hot_position
