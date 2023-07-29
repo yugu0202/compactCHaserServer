@@ -8,18 +8,18 @@ class Socket:
         self.s.bind(("0.0.0.0", self.port))
         self.s.listen(1)
 
+    def __del__(self):
+        self.conn.close()
+
     def wait_connect(self):
         self.conn, address = self.s.accept()
         print(f"Connection from {address[0]}:{self.port}")
         self.conn.settimeout(10)
 
-    def recieve_unstrip(self):
-        req = self.conn.recv(4096)
-        string_data = req.decode("utf-8")
-        return string_data
-
     def recieve(self):
-        return self.recieve_unstrip().strip()
+        req = self.conn.recv(4096)
+        string_data = req.decode("utf-8").strip()
+        return string_data
 
     def send(self,data:str):
         self.conn.send(data.encode("utf-8"))

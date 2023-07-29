@@ -9,6 +9,7 @@ class BoardManager:
         self.game_over:bool = False
         self.hot_item = 0
         self.cool_item = 0
+        self.go_reason = ""
 
     def set_map(self,file_date):
         self.map_data = []
@@ -45,11 +46,13 @@ class BoardManager:
 
         if self.refer_map([position[0] - 1,position[1]]) == 2 and self.refer_map([position[0],position[1] + 1]) == 2 and self.refer_map([position[0] + 1,position[1]]) == 2 and self.refer_map([position[0],position[1] - 1]) == 2:
             print(f"{character} around block ;;")
+            self.go_reason = f"{character} around block"
             self.game_over = True
             return [0 for i in range(10)]
 
         if position[0] < 0 or position[1] < 0 or position[0] >= self.map_size[0] or position[1] >= self.map_size[1] or self.map_data[position[0]][position[1]] == 2: #2は壁
             print(f"{character} fill up ;;")
+            self.go_reason = f"{character} fill up"
             self.game_over = True
             return [0 for i in range(10)]
 
@@ -172,7 +175,7 @@ class BoardManager:
         if position[0] + dy < 0 or position[1] + dx < 0 or position[0] + dy >= self.map_size[0] or position[1] >= self.map_size[1] + dx:
             return self.get_ready(character)
 
-        self.map_data[position[0]][position[1] - 1] = 2
+        self.map_data[position[0] + dy][position[1] + dx] = 2
 
         return self.get_ready(character)
 
