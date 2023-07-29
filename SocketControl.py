@@ -8,6 +8,9 @@ class Socket:
         self.s.bind(("0.0.0.0", self.port))
         self.s.listen(1)
 
+    def __del__(self):
+        self.conn.close()
+
     def wait_connect(self):
         self.conn, address = self.s.accept()
         print(f"Connection from {address[0]}:{self.port}")
