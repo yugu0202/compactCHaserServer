@@ -1,19 +1,19 @@
-import shutil
-
 class Logger:
     def __init__(self,log_path:str,map_path:str):
         self.path = log_path
-        shutil.copyfile(map_path,self.path)
-        with open(self.path,mode="a") as f:
-            f.write("mapend")
+        with open(map_path, mode="r") as f:
+            data = "".join(list(map(lambda x: x[2:],f.readlines())))
+
+        with open(self.path, mode="w") as f:
+            f.write(data);
 
     def set_name(self,cool_name:str,hot_name:str):
         with open(self.path,mode="a") as f:
-            f.write(f"\n{cool_name},{hot_name}")
+            f.write(f"{cool_name},{hot_name}")
 
-    def action(self,character:str,command:str):
+    def action(self,map_data:str,cool_pos:str,hot_pos:str,cool_item:int,hot_item:int):
         with open(self.path,mode="a") as f:
-            f.write(f"\n{character},{command}")
+            f.write(f"\n{map_data}\n{cool_pos}\n{hot_pos}\n{cool_item},{hot_item}")
 
     def result(self,player:str,result:str,reason:str):
         winner = None

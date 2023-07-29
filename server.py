@@ -130,7 +130,7 @@ def setup(cool,hot):
 #キャラクター行動処理一回分
 def battle(character,logger,board_manager):
     character.send("@") #開始の合図
-    recieve = recieve_action(character,logger)
+    recieve = recieve_action(character)
     if recieve != "gr":
         board_manager.game_over = True
         board_manager.go_reason = "{character.tag} bad request"
@@ -140,15 +140,16 @@ def battle(character,logger,board_manager):
     character.send(result) #行動後のデータ
     if board_manager.game_over:
         return
-    recieve = recieve_action(character,logger) # walk look search put
+    recieve = recieve_action(character) # walk look search put
     data = board_manager.char_action(character.tag,recieve)
+    logger.action(board_manager.get_map_str(),",".join(map(str,reversed(board_manager.cool_position))),",".join(map(str,reversed(board_manager.hot_position))),board_manager.cool_item,board_manager.hot_item)
     result = "".join(map(str,data))
     character.send(result)
     if board_manager.game_over:
         return
     recieve = character.recieve() #ここは終了の合図 #が来る
 
-def recieve_action(character,logger):
+def recieve_action(character):
     recieve = character.recieve()
     if not recieve:
         print(f"{character.tag} is lose\nreason: lost connection", file=sys.stderr)
@@ -158,7 +159,6 @@ def recieve_action(character,logger):
         print(f"{character.tag} is lose\nreason: command {recieve} does not exists", file=sys.stderr)
         logger.result(character.tag,"lose",f"{character.tag} sent a command that does not exist. command: {recieve}")
         sys.exit(1)
-    logger.action(character.tag,recieve)
     return recieve
 
 if __name__ == "__main__":
