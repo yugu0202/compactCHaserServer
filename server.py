@@ -41,8 +41,8 @@ def main():
     logger = Logger.Logger(log_path,map_path)
 
     #ゲームマネージャーの初期化
-    game_manager = BoardManager.BoardManager(map_path)
-    turn = game_manager.turn
+    board_manager = BoardManager.BoardManager(map_path)
+    turn = board_manager.turn
 
     #ソケットの準備
     cool = SocketControl.Socket(args.firstport,"cool")
@@ -68,19 +68,19 @@ def main():
         try:
             if turn & 1 == 1:
                 tag = hot.tag
-                turn = battle(hot,logger,game_manager)
+                battle(hot,logger,board_manager)
             else:
                 tag = cool.tag
-                turn = battle(cool,logger,game_manager)
+                battle(cool,logger,board_manager)
         except ConnectionAbortedError:
             print(f"{tag} is lose\nreason: lost connection")
             logger.result(character.tag,"lose",f"{tag} lost connection")
             return
 
         #試合終了の処理
-        if game_manager.game_over:
-            print(f"{tag} is lose\nreason: error", file=sys.stderr)
-            logger.result(tag,"lose",f"{tag} is error")
+        if board_manager.game_over:
+            print(f"{tag} is lose\nreason: {board_manager.go_reason}", file=sys.stderr)
+            logger.result(tag,"lose",f"{board_manager.go_reason}")
             break
 
         turn -= 1
@@ -88,24 +88,28 @@ def main():
     if turn == 0:
         print("turn end!!")
         #ゲームマネージャーから対戦結果の受け取り
-        player,result = game_manager.result()
-        cool_item = game_manager.cool_item
-        hot_item = game_manager.hot_item
+        player,result = board_manager.result()
+        cool_item = board_manager.cool_item
+        hot_item = board_manager.hot_item
         if player:
-            print(f"{player} {result}\nreason score cool {cool_item} : hot {hot_item}")
+            print(f"{player} {result}\nreason: score cool {cool_item} : hot {hot_item}")
         else:
-            print(f"{result}\nreason score cool {cool_item} : hot {hot_item}")
+            print(f"{result}\nreason: score cool {cool_item} : hot {hot_item}")
         logger.result(player,result,f"cool {cool_item} : hot {hot_item}")
 
-        recieve = hot.recieve()
+        hot.send("@") #開始の合図
+        hot.recieve()
         hot.send("".join(map(str,[0 for i in range(10)])))
-        recieve = cool.recieve()
+        cool.send("@") #開始の合図
+        cool.recieve()
         cool.send("".join(map(str,[0 for i in range(10)])))
     elif turn & 1 == 1:
-        recieve = cool.recieve()
+        cool.send("@") #開始の合図
+        cool.recieve()
         cool.send("".join(map(str,[0 for i in range(10)])))
     else:
-        recieve = hot.recieve()
+        hot.send("@") #開始の合図
+        hot.recieve()
         hot.send("".join(map(str,[0 for i in range(10)])))
 
     cool.close()
@@ -124,21 +128,25 @@ def setup(cool,hot):
             break
 
 #キャラクター行動処理一回分
-def battle(character,logger,game_manager):
+def battle(character,logger,board_manager):
     character.send("@") #開始の合図
     recieve = recieve_action(character,logger)
-    data = game_manager.char_action(character.tag,recieve) #get ready
+    if recieve != "gr":
+        board_manager.game_over = True
+        board_manager.go_reason = "{character.tag} bad request"
+        return
+    data = board_manager.char_action(character.tag,recieve) #get ready
     result = "".join(map(str,data))
     character.send(result) #行動後のデータ
-    if game_manager.game_over:
+    if board_manager.game_over:
         return
     recieve = recieve_action(character,logger) # walk look search put
-    data = game_manager.char_action(character.tag,recieve)
+    data = board_manager.char_action(character.tag,recieve)
     result = "".join(map(str,data))
     character.send(result)
-    if game_manager.game_over:
+    if board_manager.game_over:
         return
-    character.recieve_unstrip() #ここは終了の合図 #\r\nが来る
+    recieve = character.recieve() #ここは終了の合図 #が来る
 
 def recieve_action(character,logger):
     recieve = character.recieve()
