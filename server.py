@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import signal
 
 import SocketControl
-import Logger
+import DumpSystem
 import BoardManager
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -19,26 +19,26 @@ def main():
         description="このプログラムはコマンドライン上で簡単にCHaserの対戦を行うためのものです"
     )
     """
-    py server.py {map_path} --cport {cool_port} --hport {hot_port} --log {log_path}
-    py server.py {map_path} -c {cool_port} -h {hot_port} -l {log_path}
+    py server.py {map_path} --cport {cool_port} --hport {hot_port} --dump {dump_path}
+    py server.py {map_path} -c {cool_port} -h {hot_port} -d {dump_path}
     """
     parser.add_argument("mappath", help="マップのパス(実行ディレクトリから相対)")
     parser.add_argument("-f", "--firstport", default=2009, help="先攻のポート")
     parser.add_argument("-s", "--secondport", default=2010, help="後攻のポート")
-    parser.add_argument("-l", "--log", default="./chaser.log", help="logの出力先(実行ディレクトリから相対)")
+    parser.add_argument("-d", "--dump", default="./chaser.dump", help="dumpの出力先(実行ディレクトリから相対)")
 
     args = parser.parse_args()
 
     base_path = os.getcwd()
     map_path = os.path.join(base_path, args.mappath)
-    log_path = os.path.join(base_path, args.log)
+    dump_path = os.path.join(base_path, args.dump)
 
     if not os.path.exists(map_path):
         print(f"Error: map file not exists\npath: {map_path}", file=sys.stderr)
         sys.exit(1)
 
     #ロガーの準備
-    logger = Logger.Logger(log_path,map_path)
+    dump_system = DumpSystem.DumpSystem(dump_path,map_path)
 
     #ゲームマネージャーの初期化
     board_manager = BoardManager.BoardManager(map_path)
@@ -48,7 +48,7 @@ def main():
     cool = SocketControl.Socket(args.firstport,"cool")
     hot = SocketControl.Socket(args.secondport,"hot")
 
-    print(f"cool port: {args.firstport}\nhot port: {args.secondport}\nmap path: {map_path}\nlog path: {log_path}")
+    print(f"cool port: {args.firstport}\nhot port: {args.secondport}\nmap path: {map_path}\ndump path: {dump_path}")
     print(f"connect wait...")
 
     setup(cool,hot)
@@ -58,7 +58,7 @@ def main():
     hot_name = hot.recieve()
 
     #名前をログに記録
-    logger.set_name(cool_name, hot_name)
+    dump_system.set_name(cool_name, hot_name)
 
     print("ready")
     print(f"cool: \"{cool_name}\" vs hot: \"{hot_name}\"\nstart!!")
@@ -68,19 +68,19 @@ def main():
         try:
             if turn & 1 == 1:
                 tag = hot.tag
-                battle(hot,logger,board_manager)
+                battle(hot,dump_system,board_manager)
             else:
                 tag = cool.tag
-                battle(cool,logger,board_manager)
+                battle(cool,dump_system,board_manager)
         except ConnectionAbortedError:
             print(f"{tag} is lose\nreason: lost connection")
-            logger.result(character.tag,"lose",f"{tag} lost connection")
+            dump_system.result(character.tag,"lose",f"{tag} lost connection")
             return
 
         #試合終了の処理
         if board_manager.game_over:
             print(f"{tag} is lose\nreason: {board_manager.go_reason}", file=sys.stderr)
-            logger.result(tag,"lose",f"{board_manager.go_reason}")
+            dump_system.result(tag,"lose",f"{board_manager.go_reason}")
             break
 
         turn -= 1
@@ -95,7 +95,7 @@ def main():
             print(f"{player} {result}\nreason: score cool {cool_item} : hot {hot_item}")
         else:
             print(f"{result}\nreason: score cool {cool_item} : hot {hot_item}")
-        logger.result(player,result,f"cool {cool_item} : hot {hot_item}")
+        dump_system.result(player,result,f"cool {cool_item} : hot {hot_item}")
 
         hot.send("@") #開始の合図
         hot.recieve()
@@ -128,7 +128,7 @@ def setup(cool,hot):
             break
 
 #キャラクター行動処理一回分
-def battle(character,logger,board_manager):
+def battle(character,dump_system,board_manager):
     character.send("@") #開始の合図
     recieve = recieve_action(character)
     if recieve != "gr":
@@ -142,7 +142,7 @@ def battle(character,logger,board_manager):
         return
     recieve = recieve_action(character) # walk look search put
     data = board_manager.char_action(character.tag,recieve)
-    logger.action(board_manager.get_map_str(),",".join(map(str,reversed(board_manager.cool_position))),",".join(map(str,reversed(board_manager.hot_position))),board_manager.cool_item,board_manager.hot_item)
+    dump_system.action(board_manager.get_map_str(),",".join(map(str,reversed(board_manager.cool_position))),",".join(map(str,reversed(board_manager.hot_position))),board_manager.cool_item,board_manager.hot_item)
     result = "".join(map(str,data))
     character.send(result)
     if board_manager.game_over:
@@ -153,11 +153,11 @@ def recieve_action(character):
     recieve = character.recieve()
     if not recieve:
         print(f"{character.tag} is lose\nreason: lost connection", file=sys.stderr)
-        logger.result(character.tag,"lose",f"{character.tag} lost connection")
+        dump_system.result(character.tag,"lose",f"{character.tag} lost connection")
         sys.exit(1)
     if not len(recieve) == 2:
         print(f"{character.tag} is lose\nreason: command {recieve} does not exists", file=sys.stderr)
-        logger.result(character.tag,"lose",f"{character.tag} sent a command that does not exist. command: {recieve}")
+        dump_system.result(character.tag,"lose",f"{character.tag} sent a command that does not exist. command: {recieve}")
         sys.exit(1)
     return recieve
 
