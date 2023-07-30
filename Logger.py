@@ -2,14 +2,13 @@ class Logger:
     def __init__(self,log_path:str,map_path:str):
         self.path = log_path
         with open(map_path, mode="r") as f:
-            data = "".join(list(map(lambda x: x[2:],f.readlines())))
-
-        with open(self.path, mode="w") as f:
-            f.write(data);
+            self.map_data = "".join(list(map(lambda x: x[2:],f.readlines())))
 
     def set_name(self,cool_name:str,hot_name:str):
-        with open(self.path,mode="a") as f:
-            f.write(f"{cool_name},{hot_name}")
+        with open(self.path,mode="w") as f:
+            f.write(f"{cool_name},{hot_name}\n")
+            f.write(self.map_data);
+            f.write("0,0");
 
     def action(self,map_data:str,cool_pos:str,hot_pos:str,cool_item:int,hot_item:int):
         with open(self.path,mode="a") as f:
@@ -30,4 +29,4 @@ class Logger:
         else:
             with open(self.path,mode="a") as f:
                 f.write("\ngameend")
-                f.write(f"\n{result},{reason}")
+                f.write(f"\n,{result},{reason}")
