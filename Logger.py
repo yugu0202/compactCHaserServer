@@ -1,4 +1,4 @@
-class Logger:
+class DumpSystem:
     def __init__(self,log_path:str,map_path:str):
         self.path = log_path
         with open(map_path, mode="r") as f:
