@@ -20,15 +20,18 @@ def main():
         fromfile_prefix_chars="@"
     )
     """
-    py server.py {map_path} --first-port {first_port} --second-port {hot_port} --dump {dump_path}
-    py server.py {map_path} -f {cool_port} -s {hot_port} -d {dump_path}
+    py server.py {map_path} --first-port {first_port} --second-port {second_port} --dump-path {dump_path}
+    py server.py {map_path} -f {first_port} -s {second_port} -d {dump_path}
+
+    py server.py {map_path} --first-port {first_port} --second-port {second_port} --non-dump
+    py server.py {map_path} -f {first_port} -s {second_port} -nd
     """
     parser.add_argument("mappath", help="マップのパス(実行ディレクトリから相対)")
     parser.add_argument("-v", "--version", action="version", version="%(prog)s v2.0.1")
     parser.add_argument("-f", "--first-port", type=int, default=2009, help="先攻のポート (type: %(type)s, default: %(default)s)")
     parser.add_argument("-s", "--second-port", type=int, default=2010, help="後攻のポート (type: %(type)s, default: %(default)s)")
-    parser.add_argument("-nd", "--non-dump", action="store_false", help="このオプションがつけられた場合dumpを出力しません")
-    parser.add_argument("-df", "--dump-path", default="./chaser.dump", help="dumpの出力先(実行ディレクトリから相対) (default: %(default)s)")
+    parser.add_argument("-nd", "--non-dump", action="store_true", help="このオプションがつけられた場合dumpを出力しません")
+    parser.add_argument("-d", "--dump-path", default="./chaser.dump", help="dumpの出力先(実行ディレクトリから相対) (default: %(default)s)")
 
     args = parser.parse_args()
     print(args)
