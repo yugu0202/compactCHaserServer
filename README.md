@@ -13,17 +13,23 @@
 ## Options
 | option | short | description | type | default |
 | --- | :---: | --- | :---: | --- |
-| firstport | f | 先行のポート | int | 2009 |
-| secondport | s | 後攻のポート | int | 2010 |
-| dump | d | ダンプファイルの出力先(実行ディレクトリから相対パス) | string | "./chaser.dump" |
+| first-port | f | 先行のポート | int | 2009 |
+| second-port | s | 後攻のポート | int | 2010 |
+| non-dump | nd | ダンプファイルの出力抑制 | bool | False |
+| dump-path | d | ダンプファイルの出力先(実行ディレクトリから相対パス) | string | "./chaser.dump" |
 
 ## Usages
 ### 先行のポートを3001にする
-```py server.py <mappath> -f 3001```  
+`py server.py <mappath> -f 3001`  
 or  
-```py server.py <mappath> --firstport 3001```
+`py server.py <mappath> --first-port 3001`
 
 ### ダンプファイルの出力先を```./dump.dump```に変える
-```py server.py <mappath> -d ./dump.dump```  
+`py server.py <mappath> -d ./dump.dump`  
 or  
-```py server.py <mappath> -dump ./dump.dump```
+`py server.py <mappath> --dump-path ./dump.dump`
+
+### ダンプファイルを出力しない
+`py server.py <mappath> -nd`  
+or  
+`py server.py <mappath> --non-dump`
