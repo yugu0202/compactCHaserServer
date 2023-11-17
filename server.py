@@ -30,7 +30,7 @@ def main():
     parser.add_argument("-v", "--version", action="version", version="%(prog)s v2.0.1")
     parser.add_argument("-f", "--first-port", type=int, default=2009, help="先攻のポート (type: %(type)s, default: %(default)s)")
     parser.add_argument("-s", "--second-port", type=int, default=2010, help="後攻のポート (type: %(type)s, default: %(default)s)")
-    parser.add_argument("-nd", "--non-dump", action="store_false", help="このオプションがつけられた場合dumpを出力しません")
+    parser.add_argument("-nd", "--non-dump", action="store_true", help="このオプションがつけられた場合dumpを出力しません")
     parser.add_argument("-d", "--dump-path", default="./chaser.dump", help="dumpの出力先(実行ディレクトリから相対) (default: %(default)s)")
 
     args = parser.parse_args()
