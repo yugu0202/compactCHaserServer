@@ -27,8 +27,8 @@ def main():
     parser.add_argument("-v", "--version", action="version", version="%(prog)s v2.0.1")
     parser.add_argument("-f", "--first-port", type=int, default=2009, help="先攻のポート (type: %(type)s, default: %(default)s)")
     parser.add_argument("-s", "--second-port", type=int, default=2010, help="後攻のポート (type: %(type)s, default: %(default)s)")
-    parser.add_argument("-d", "--dump", action="store_false", help="このオプションがつけられた場合dumpを出力しません")
-    parser.add_argument("-df", "--dump-file", default="./chaser.dump", help="dumpの出力先(実行ディレクトリから相対) (default: %(default)s)")
+    parser.add_argument("-nd", "--non-dump", action="store_false", help="このオプションがつけられた場合dumpを出力しません")
+    parser.add_argument("-df", "--dump-path", default="./chaser.dump", help="dumpの出力先(実行ディレクトリから相対) (default: %(default)s)")
 
     args = parser.parse_args()
     print(args)
@@ -42,15 +42,15 @@ def main():
         sys.exit(1)
 
     #ロガーの準備
-    dump_system = DumpSystem.DumpSystem(args.dump,dump_path,map_path)
+    dump_system = DumpSystem.DumpSystem(args.non_dump,dump_path,map_path)
 
     #ゲームマネージャーの初期化
     board_manager = BoardManager.BoardManager(map_path)
     turn = board_manager.turn
 
     #ソケットの準備
-    cool = SocketControl.Socket(args.firstport,"cool")
-    hot = SocketControl.Socket(args.secondport,"hot")
+    cool = SocketControl.Socket(args.first_port,"cool")
+    hot = SocketControl.Socket(args.second_port,"hot")
 
     print(f"cool port: {args.first_port}\nhot port: {args.second_port}\nmap path: {map_path}\ndump path: {dump_path}")
     print(f"connect wait...")
