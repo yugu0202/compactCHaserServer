@@ -16,39 +16,46 @@ def main():
     parser = argparse.ArgumentParser(
         prog="compact CHaser Server",
         usage="py server.py <MAPPATH> [OPTIONS]",
-        description="このプログラムはコマンドライン上で簡単にCHaserの対戦を行うためのものです"
+        description="このプログラムはコマンドライン上で簡単にCHaserの対戦を行うためのものです",
+        fromfile_prefix_chars="@"
     )
     """
-    py server.py {map_path} --cport {cool_port} --hport {hot_port} --dump {dump_path}
-    py server.py {map_path} -c {cool_port} -h {hot_port} -d {dump_path}
+    py server.py {map_path} --first-port {first_port} --second-port {second_port} --dump-path {dump_path}
+    py server.py {map_path} -f {first_port} -s {second_port} -d {dump_path}
+
+    py server.py {map_path} --first-port {first_port} --second-port {second_port} --non-dump
+    py server.py {map_path} -f {first_port} -s {second_port} -nd
     """
     parser.add_argument("mappath", help="マップのパス(実行ディレクトリから相対)")
-    parser.add_argument("-f", "--firstport", default=2009, help="先攻のポート")
-    parser.add_argument("-s", "--secondport", default=2010, help="後攻のポート")
-    parser.add_argument("-d", "--dump", default="./chaser.dump", help="dumpの出力先(実行ディレクトリから相対)")
+    parser.add_argument("-v", "--version", action="version", version="%(prog)s v2.0.1")
+    parser.add_argument("-f", "--first-port", type=int, default=2009, help="先攻のポート (type: %(type)s, default: %(default)s)")
+    parser.add_argument("-s", "--second-port", type=int, default=2010, help="後攻のポート (type: %(type)s, default: %(default)s)")
+    parser.add_argument("-nd", "--non-dump", action="store_true", help="このオプションがつけられた場合dumpを出力しません")
+    parser.add_argument("-d", "--dump-path", default="./chaser.dump", help="dumpの出力先(実行ディレクトリから相対) (default: %(default)s)")
 
     args = parser.parse_args()
+    print(args)
 
     base_path = os.getcwd()
     map_path = os.path.join(base_path, args.mappath)
-    dump_path = os.path.join(base_path, args.dump)
+    dump_path = os.path.join(base_path, args.dump_path)
 
     if not os.path.exists(map_path):
         print(f"Error: map file not exists\npath: {map_path}", file=sys.stderr)
         sys.exit(1)
 
     #ロガーの準備
-    dump_system = DumpSystem.DumpSystem(dump_path,map_path)
+    dump_system = DumpSystem.DumpSystem(args.non_dump,dump_path,map_path)
 
     #ゲームマネージャーの初期化
     board_manager = BoardManager.BoardManager(map_path)
     turn = board_manager.turn
 
     #ソケットの準備
-    cool = SocketControl.Socket(args.firstport,"cool")
-    hot = SocketControl.Socket(args.secondport,"hot")
+    cool = SocketControl.Socket(args.first_port,"cool")
+    hot = SocketControl.Socket(args.second_port,"hot")
 
-    print(f"cool port: {args.firstport}\nhot port: {args.secondport}\nmap path: {map_path}\ndump path: {dump_path}")
+    print(f"cool port: {args.first_port}\nhot port: {args.second_port}\nmap path: {map_path}\ndump path: {dump_path}")
     print(f"connect wait...")
 
     setup(cool,hot)
